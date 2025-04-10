@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+
+        {% if not video.processing_complete %}
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin"></i> Video processing in progress...
+        </div>
+        {% endif %}
+
+        <!-- Video Player Column -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: teal;">
+                    <h4 class="mb-0">
+                        <i class="fas fa-play-circle me-2"></i>Video Player
+                    </h4>
+                    <span class="badge" style="background-color: salmon;">{{ video.filename.split('.')[-1] }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="video-container mb-4 ratio ratio-16x9">
+                        <video controls class="rounded" id="videoPlayer">
+                            <source src="{{ url_for('static', filename='uploads/' + video.filename) }}" 
+                                    type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    
+                    <h5 class="mt-4 mb-3">
+                        <i class="fas fa-film me-2"></i>Key Moments
+                    </h5>
+                    <div class="keyframes-container d-flex flex-wrap">o
+                        {% for i in range(5) %}
+                        <div class="keyframe-wrapper me-2 mb-2 position-relative">
+                            <img src="{{ url_for('static', filename='thumbnails/' + video.thumbnail_path) }}" 
+                                 class="keyframe rounded" alt="Keyframe {{ i }}">
+                            <span class="timestamp badge bg-dark position-absolute bottom-0 end-0 m-1">
+                                {{ (i * 5)|int }}:{{ "%02d"|format((i * 30) % 60) }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Column -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-teal text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Video Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-truncate" title="{{ video.filename }}">{{ video.filename }}</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-calendar-alt text-muted me-2"></i>
+                        <p class="text-muted mb-0">
+                            Uploaded on {{ video.upload_date.strftime('%B %d, %Y') }}
+                        </p>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <a href="{{ url_for('static', filename='uploads/' + video.filename) }}" 
+                           class="btn btn-sm btn-outline-primary me-2" 
+                           download="{{ video.filename }}">
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="shareVideo()">
+                            <i class="fas fa-share-alt me-1"></i>Share
+                        </button>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-teal text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Summary
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h3>Transcription</h3>
+                    <pre style="white-space: pre-wrap;">{{ video.transcription or "No transcription available." }}</pre>
+
+                    <h3>Video Summary</h3>
+                    <pre style="white-space: pre-wrap;">{{ video.summary or "No summary available." }}</pre>
+                    <div class="d-grid gap-2 mt-3">
+                        <button class="btn btn-primary" onclick="generatePDF()" style="background-color: teal;">
+                            <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Share this video with others:</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="shareLink" 
+                           value="{{ request.url }}" readonly>
+                    <button class="btn btn-outline-secondary" type="button" 
+                            onclick="copyShareLink()">Copy</button>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}" 
+                       target="_blank" class="btn btn-outline-primary mx-1">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.url|urlencode }}&text=Check out this video" 
+                       target="_blank" class="btn btn-outline-info mx-1">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url|urlencode }}" 
+                       target="_blank" class="btn btn-outline-secondary mx-1">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="mailto:?subject=Check out this video&body={{ request.url }}" 
+                       class="btn btn-outline-danger mx-1">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-teal {
+    background-color: teal;
+}
+
+.video-container {
+    background-color: #000;
+    border-radius: 5px;
+}
+
+.keyframe {
+    width: 120px;
+    height: 68px;
+    object-fit: cover;
+}
+
+.keyframe-wrapper {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.keyframe-wrapper:hover {
+    transform: scale(1.05);
+}
+
+.timestamp {
+    font-size: 0.7rem;
+}
+
+.summary-content {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .keyframe {
+        width: 100px;
+        height: 56px;
+    }
+}
+</style>
+
+<!-- Include jsPDF library for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event to keyframes to seek video
+    const video = document.querySelector('video');
+    const keyframes = document.querySelectorAll('.keyframe-wrapper');
+    
+    keyframes.forEach((keyframe, index) => {
+        keyframe.addEventListener('click', function() {
+            // Calculate time based on index (5 minutes per keyframe in this example)
+            const seekTime = index * 300; // 5 minutes * 60 seconds
+            video.currentTime = seekTime;
+            video.play();
+        });
+    });
+});
+
+// Share functionality
+function shareVideo() {
+    const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+    shareModal.show();
+}
+
+function copyShareLink() {
+    const shareLink = document.getElementById('shareLink');
+    shareLink.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const copyButton = shareLink.nextElementSibling;
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    copyButton.classList.replace('btn-outline-secondary', 'btn-success');
+    
+    setTimeout(() => {
+        copyButton.innerHTML = originalText;
+        copyButton.classList.replace('btn-success', 'btn-outline-secondary');
+    }, 2000);
+}
+
+// PDF generation functionality
+function generatePDF() {
+    // Show loading indicator
+    const pdfButton = document.querySelector('.btn-primary');
+    const originalButtonText = pdfButton.innerHTML;
+    pdfButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating PDF...';
+    pdfButton.disabled = true;
+    
+    setTimeout(() => {
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(18);
+            doc.text('Video Summary', 105, 15, { align: 'center' });
+            
+            // Add video details
+            doc.setFontSize(14);
+            doc.text('Video Details', 20, 30);
+            
+            doc.setFontSize(12);
+            doc.text(`Filename: {{ video.filename }}`, 20, 40);
+            doc.text(`Upload Date: {{ video.upload_date.strftime('%B %d, %Y') }}`, 20, 50);
+            
+            // Add summary content
+            doc.setFontSize(14);
+            doc.text('Summary', 20, 70);
+            
+            // Get summary text
+            const summaryContent = document.getElementById('summaryContent').innerText;
+            
+            // Split text into lines that fit the PDF width
+            const textLines = doc.splitTextToSize(summaryContent, 170);
+            doc.setFontSize(12);
+            doc.text(textLines, 20, 80);
+            
+            // Add thumbnail
+            // Note: In a real implementation, you'd need to handle image loading properly
+            // This is simplified for demonstration
+            /*
+            const img = new Image();
+            img.src = "{{ url_for('static', filename='thumbnails/' + video.thumbnail_path) }}";
+            img.onload = function() {
+                doc.addImage(img, 'JPEG', 20, 150, 80, 45);
+                doc.save('{{ video.filename }}_summary.pdf');
+            };
+            */
+            
+            // Save the PDF
+            doc.save('{{ video.filename }}_summary.pdf');
+            
+            // Reset button
+            pdfButton.innerHTML = '<i class="fas fa-check me-2"></i>PDF Generated!';
+            pdfButton.classList.replace('btn-primary', 'btn-success');
+            
+            setTimeout(() => {
+                pdfButton.innerHTML = originalButtonText;
+                pdfButton.classList.replace('btn-success', 'btn-primary');
+                pdfButton.disabled = false;
+            }, 2000);
+            
+        } catch (error) {
+            console.error('PDF generation failed:', error);
+            pdfButton.innerHTML = '<i class="fas fa-times me-2"></i>Failed to generate PDF';
+            pdfButton.classList.replace('btn-primary', 'btn-danger');
+            
+            setTimeout(() => {
+                pdfButton.innerHTML = originalButtonText;
+                pdfButton.classList.replace('btn-danger', 'btn-primary');
+                pdfButton.disabled = false;
+            }, 2000);
+        }
+    }, 1000);
+}
+</script>
+{% endblock %}

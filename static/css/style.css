@@ -1,0 +1,43 @@
+.masthead {
+    padding-top: 10rem;
+    padding-bottom: 6rem;
+    background: linear-gradient(to bottom right, #1e3c72, #2a5298);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: scroll;
+    background-size: cover;
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+}
+
+.video-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.keyframes-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.keyframe {
+    width: 160px;
+    height: 90px;
+    object-fit: cover;
+}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Your Videos</h2>
+    <div class="row">
+        {% if videos and videos.items|length > 0 %}
+            {% for video in videos.items %}
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card shadow-sm">
+                    <img src="{{ url_for('static', filename='thumbnails/' + video.thumbnail_path) }}" 
+                         class="card-img-top video-thumbnail" alt="Video thumbnail">
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate" title="{{ video.filename }}">{{ video.filename }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Uploaded on {{ video.upload_date.strftime('%Y-%m-%d') }}</small>
+                        </p>
+                        <a href="{{ url_for('video_detail', video_id=video.id) }}" 
+                           class="btn btn-primary w-100" style="background-color: teal;">
+                            <i class="fas fa-info-circle me-2"></i>View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12 text-center" style="padding-top: 10%;">
+            <p class="text-muted">No videos uploaded yet.</p>
+            <a href="{{ url_for('upload') }}" class="btn btn-primary" style="background-color: teal; padding: 10px 20px; font-size: 16px;">
+                <i class="fas fa-upload me-2"></i>Upload Your First Video
+            </a>
+        </div>        
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.video-thumbnail {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 5px 5px 0 0;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+</style>
+{% endblock %}
